@@ -18,8 +18,8 @@ import express from "express";
 import cors from "cors";
 import pg from "pg";
 import crypto from "node:crypto";
-import axios from "axios";
 import "dotenv/config";
+import { webhookQueue } from "./queue.js";
 
 // ---------------------------------------------------------------------------
 // Database setup
@@ -76,9 +76,6 @@ function isValidUrl(str) {
 function generateSecret() {
   return "whsec_" + crypto.randomBytes(24).toString("hex");
 }
-
-// Retry-delay helper – wait `ms` milliseconds.
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------------------------------------------------------------------
 // Webhook CRUD routes
@@ -202,14 +199,12 @@ app.get("/delivery-logs", async (_req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Event trigger
+// Event trigger (async via BullMQ)
 // ---------------------------------------------------------------------------
 //
-// When an event is triggered the server will:
-//   1. Find all *active* webhooks subscribed to the given event_type.
-//   2. For each webhook, send an HTTP POST with the payload (5 s timeout).
-//   3. Log the result (success / failure) into delivery_logs.
-//   4. Return a summary.
+// Validates the request, finds subscribed webhooks, pushes one job per
+// webhook to the "webhook-delivery" queue, and returns immediately.
+// The actual HTTP delivery happens in the worker process (worker.js).
 
 app.post("/events/trigger", async (req, res) => {
   try {
@@ -239,66 +234,29 @@ app.post("/events/trigger", async (req, res) => {
     if (webhooks.length === 0) {
       return res.json({
         message: "No active webhooks found for this event type.",
-        delivered: 0,
-        failed: 0,
-        results: [],
+        queued: 0,
       });
     }
 
-    // -- Deliver to each webhook --
-    const results = [];
-
-    for (const wh of webhooks) {
-      let statusCode = null;
-      let responseBody = null;
-      let success = false;
-
-      try {
-        const axiosResp = await axios.post(wh.url, payload, {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Webhook-Secret": wh.secret,
-            "X-Event-Type": event_type,
-          },
-          timeout: 5000, // 5-second timeout per webhook
-          validateStatus: () => true, // don't throw on non-2xx
-        });
-
-        statusCode = axiosResp.status;
-        responseBody = typeof axiosResp.data === "string"
-          ? axiosResp.data.substring(0, 2000)
-          : JSON.stringify(axiosResp.data).substring(0, 2000);
-        success = statusCode >= 200 && statusCode < 300;
-      } catch (err) {
-        // Network error / timeout
-        statusCode = err.code === "ECONNABORTED" ? 0 : 0;
-        responseBody = err.message.substring(0, 2000);
-        success = false;
-      }
-
-      // -- Log the attempt --
-      await pool.query(
-        `INSERT INTO delivery_logs (webhook_id, event_type, payload, status_code, success, response_body)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [wh.id, event_type, JSON.stringify(payload), statusCode, success, responseBody]
-      );
-
-      results.push({
+    // -- Push one job per webhook to the queue --
+    const jobs = webhooks.map((wh) => ({
+      name: `deliver-${wh.id}`,
+      data: {
         webhookId: wh.id,
         url: wh.url,
-        success,
-        statusCode,
-      });
-    }
+        secret: wh.secret,
+        eventType: event_type,
+        payload,
+      },
+    }));
 
-    const delivered = results.filter((r) => r.success).length;
-    const failed = results.filter((r) => !r.success).length;
+    await webhookQueue.addBulk(jobs);
+
+    console.log(`Trigger: queued ${jobs.length} job(s) for "${event_type}"`);
 
     return res.json({
-      message: `${delivered} succeeded, ${failed} failed (${webhooks.length} target(s)).`,
-      delivered,
-      failed,
-      results,
+      message: `${jobs.length} job(s) queued for delivery.`,
+      queued: jobs.length,
     });
   } catch (err) {
     console.error("POST /events/trigger error:", err.message);

@@ -4,6 +4,7 @@ import { availableEventTypes } from "../data/dummyData";
 export default function WebhookForm({ onSubmit, onClose }) {
   const [url, setUrl] = useState("");
   const [eventType, setEventType] = useState(availableEventTypes[0]);
+  const [submitting, setSubmitting] = useState(false);
 
   const generateSecret = () => {
     const chars = "abcdef0123456789";
@@ -21,7 +22,8 @@ export default function WebhookForm({ onSubmit, onClose }) {
     e.preventDefault();
     if (!url.trim()) { alert("Please enter a target URL."); return; }
     if (!isValidUrl(url.trim())) { alert("URL must start with http:// or https://"); return; }
-    onSubmit({ url: url.trim(), eventType, secret, status: "active", lastDelivery: "\u2014" });
+    setSubmitting(true);
+    onSubmit({ url: url.trim(), eventType, secret }, { setSubmitting });
   };
 
   return (
@@ -29,7 +31,8 @@ export default function WebhookForm({ onSubmit, onClose }) {
       <div className="w-full max-w-lg rounded-xl bg-white p-8 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">Add Webhook</h2>
-          <button onClick={onClose} className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" aria-label="Close">
+          <button onClick={onClose} disabled={submitting}
+            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" aria-label="Close">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -40,12 +43,14 @@ export default function WebhookForm({ onSubmit, onClose }) {
             <label className="mb-1 block text-sm font-medium text-gray-700">Target URL</label>
             <input type="text" value={url} onChange={(e) => setUrl(e.target.value)}
               placeholder="https://api.example.com/webhooks/..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Event Type</label>
             <select value={eventType} onChange={(e) => setEventType(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100">
               {availableEventTypes.map((evt) => <option key={evt} value={evt}>{evt}</option>)}
             </select>
           </div>
@@ -54,15 +59,23 @@ export default function WebhookForm({ onSubmit, onClose }) {
             <div className="flex gap-2">
               <input type="text" value={secret} readOnly
                 className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-xs font-mono text-gray-600" />
-              <button type="button" onClick={handleRegenerate}
-                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-100 transition-colors">Regenerate</button>
+              <button type="button" onClick={handleRegenerate} disabled={submitting}
+                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50">Regenerate</button>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose}
-              className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit"
-              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors">Add Webhook</button>
+            <button type="button" onClick={onClose} disabled={submitting}
+              className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">Cancel</button>
+            <button type="submit" disabled={submitting}
+              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2">
+              {submitting && (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+              {submitting ? "Creating..." : "Add Webhook"}
+            </button>
           </div>
         </form>
       </div>

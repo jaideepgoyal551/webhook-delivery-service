@@ -2,19 +2,14 @@
 node_modules/
 **/node_modules/
 
-# Environment files
+# Environment
 .env
 *.env
 **/.env
 
 # Logs
-logs/
 *.log
 
 # Build
 dist/
 build/
-
-# OS
-.DS_Store
-Thumbs.db

@@ -1,18 +1,13 @@
 // Database initialisation / migration script.
 // Run with:  node db/init.js
 //
-// This script connects to PostgreSQL, creates the `webhooks` table if it
-// does not already exist, and inserts a couple of sample rows so you have
-// data to work with immediately.
+// Creates both the `webhooks` and `delivery_logs` tables, then seeds a few
+// sample webhook rows.
 
 import pg from "pg";
 import "dotenv/config";
 
 const { Pool } = pg;
-
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -22,7 +17,7 @@ const pool = new Pool({
 // Migration SQL
 // ---------------------------------------------------------------------------
 
-const createTableSQL = `
+const createWebhooksTable = `
   CREATE TABLE IF NOT EXISTS webhooks (
     id          SERIAL PRIMARY KEY,
     url         TEXT        NOT NULL,
@@ -30,6 +25,19 @@ const createTableSQL = `
     secret      TEXT        NOT NULL,
     is_active   BOOLEAN     NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+`;
+
+const createDeliveryLogsTable = `
+  CREATE TABLE IF NOT EXISTS delivery_logs (
+    id            SERIAL    PRIMARY KEY,
+    webhook_id    INTEGER   NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE,
+    event_type    TEXT      NOT NULL,
+    payload       JSONB     NOT NULL DEFAULT '{}',
+    status_code   INTEGER,
+    success       BOOLEAN   NOT NULL DEFAULT FALSE,
+    response_body TEXT,
+    attempted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 `;
 
@@ -48,8 +56,12 @@ const seedSQL = `
 
 try {
   console.log("Running migration...");
-  await pool.query(createTableSQL);
+
+  await pool.query(createWebhooksTable);
   console.log('Table "webhooks" is ready.');
+
+  await pool.query(createDeliveryLogsTable);
+  console.log('Table "delivery_logs" is ready.');
 
   await pool.query(seedSQL);
   console.log("Seed data inserted (if table was empty).");

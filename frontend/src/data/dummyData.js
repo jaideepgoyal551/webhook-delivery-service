@@ -1,0 +1,70 @@
+const dummyWebhooks = [
+  {
+    id: 1,
+    url: "https://api.example.com/webhooks/payments",
+    eventType: "payment_intent.succeeded",
+    status: "active",
+    lastDelivery: "2026-07-15 14:32:10 UTC",
+    secret: "whsec_abc123def456ghi789jkl",
+  },
+  {
+    id: 2,
+    url: "https://api.example.com/webhooks/orders",
+    eventType: "checkout.session.completed",
+    status: "active",
+    lastDelivery: "2026-07-16 09:15:42 UTC",
+    secret: "whsec_mno456pqr789stu012vwx",
+  },
+  {
+    id: 3,
+    url: "https://api.example.com/webhooks/customers",
+    eventType: "customer.created",
+    status: "disabled",
+    lastDelivery: "2026-07-10 18:22:33 UTC",
+    secret: "whsec_yza345bcd678efg901hij",
+  },
+  {
+    id: 4,
+    url: "https://api.example.com/webhooks/billing",
+    eventType: "invoice.paid",
+    status: "active",
+    lastDelivery: "2026-07-16 11:05:18 UTC",
+    secret: "whsec_klm234nop567qrs890tuv",
+  },
+  {
+    id: 5,
+    url: "https://api.example.com/webhooks/notifications",
+    eventType: "notification.alert",
+    status: "disabled",
+    lastDelivery: "2026-07-08 06:44:59 UTC",
+    secret: "whsec_wxy123zab456cde789fgh",
+  },
+];
+
+const availableEventTypes = [
+  "payment_intent.succeeded",
+  "payment_intent.failed",
+  "checkout.session.completed",
+  "customer.created",
+  "customer.deleted",
+  "invoice.paid",
+  "invoice.payment_failed",
+  "notification.alert",
+  "subscription.created",
+  "subscription.canceled",
+];
+
+const dummyDeliveryLogs = [
+  { id: 1, timestamp: "2026-07-16 12:01:00 UTC", webhookUrl: "https://api.example.com/webhooks/payments", eventType: "payment_intent.succeeded", httpStatus: 200, attempt: 1, result: "success" },
+  { id: 2, timestamp: "2026-07-16 11:45:30 UTC", webhookUrl: "https://api.example.com/webhooks/billing", eventType: "invoice.paid", httpStatus: 200, attempt: 1, result: "success" },
+  { id: 3, timestamp: "2026-07-16 11:30:15 UTC", webhookUrl: "https://api.example.com/webhooks/orders", eventType: "checkout.session.completed", httpStatus: 502, attempt: 2, result: "failed" },
+  { id: 4, timestamp: "2026-07-16 11:15:45 UTC", webhookUrl: "https://api.example.com/webhooks/notifications", eventType: "notification.alert", httpStatus: 0, attempt: 3, result: "retrying" },
+  { id: 5, timestamp: "2026-07-16 10:50:20 UTC", webhookUrl: "https://api.example.com/webhooks/customers", eventType: "customer.created", httpStatus: 200, attempt: 1, result: "success" },
+  { id: 6, timestamp: "2026-07-16 10:22:10 UTC", webhookUrl: "https://api.example.com/webhooks/payments", eventType: "payment_intent.succeeded", httpStatus: 500, attempt: 1, result: "failed" },
+  { id: 7, timestamp: "2026-07-16 09:55:05 UTC", webhookUrl: "https://api.example.com/webhooks/billing", eventType: "invoice.paid", httpStatus: 408, attempt: 2, result: "retrying" },
+  { id: 8, timestamp: "2026-07-16 09:30:00 UTC", webhookUrl: "https://api.example.com/webhooks/orders", eventType: "checkout.session.completed", httpStatus: 200, attempt: 1, result: "success" },
+  { id: 9, timestamp: "2026-07-15 18:12:33 UTC", webhookUrl: "https://api.example.com/webhooks/notifications", eventType: "notification.alert", httpStatus: 503, attempt: 3, result: "failed" },
+  { id: 10, timestamp: "2026-07-15 14:32:10 UTC", webhookUrl: "https://api.example.com/webhooks/payments", eventType: "payment_intent.succeeded", httpStatus: 200, attempt: 1, result: "success" },
+];
+
+export { dummyWebhooks, availableEventTypes, dummyDeliveryLogs };

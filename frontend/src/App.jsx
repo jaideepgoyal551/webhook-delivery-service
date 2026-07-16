@@ -6,7 +6,7 @@ import DeliveryLogsPage from "./pages/DeliveryLogsPage";
 import WebhookForm from "./components/WebhookForm";
 import { dummyDeliveryLogs } from "./data/dummyData";
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://webhook-delivery-service-r41e.onrender.com";
 
 // Map backend snake_case fields to frontend camelCase + derived fields.
 function mapWebhook(wh) {

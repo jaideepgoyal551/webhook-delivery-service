@@ -1,21 +1,21 @@
-const colourMap = {
-  active:    "bg-green-100 text-green-800 ring-green-600/20",
-  disabled:  "bg-gray-100 text-gray-800 ring-gray-600/20",
-  success:   "bg-green-100 text-green-800 ring-green-600/20",
-  failed:    "bg-red-100 text-red-700 ring-red-600/20",
-  retrying:  "bg-yellow-100 text-yellow-800 ring-yellow-600/20",
+const config = {
+  active:   { dot: "bg-green-500", bg: "bg-green-50 text-green-700 ring-green-600/20" },
+  disabled: { dot: "bg-gray-400", bg: "bg-gray-50 text-gray-600 ring-gray-500/20" },
+  success:  { dot: "bg-green-500", bg: "bg-green-50 text-green-700 ring-green-600/20" },
+  failed:   { dot: "bg-red-500", bg: "bg-red-50 text-red-700 ring-red-600/20" },
+  retrying: { dot: "bg-amber-400", bg: "bg-amber-50 text-amber-700 ring-amber-600/20" },
+};
+
+const labels = {
+  active: "Active", disabled: "Disabled", success: "Success", failed: "Failed", retrying: "Retrying",
 };
 
 export default function StatusBadge({ status }) {
-  const classes = colourMap[status] || colourMap.disabled;
+  const c = config[status] || config.disabled;
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${classes}`}>
-      {status === "active" ? "Active"
-        : status === "disabled" ? "Disabled"
-        : status === "success" ? "Success"
-        : status === "failed" ? "Failed"
-        : status === "retrying" ? "Retrying"
-        : status}
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${c.bg}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${c.dot}`} />
+      {labels[status] || status}
     </span>
   );
 }

@@ -1,4 +1,4 @@
-# webhook-relay
+# webhook-delivery-service
 
 > A reliable webhook delivery system with automatic retries, HMAC signature verification, and rate limiting — inspired by how Stripe and GitHub handle webhook infrastructure.
 
